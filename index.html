@@ -7,28 +7,80 @@
     <meta name="theme-color" content="#0b1020" />
     <title>Курьер-экспресс</title>
     <style>
-      html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0b1020; }
-      #root { height: 100dvh; }
-      #root > div { height: 100dvh !important; max-height: 100dvh !important; }
-      #root .min-h-screen { min-height: 100dvh !important; overflow-y: auto !important; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
-      #root .absolute.inset-0:not(:has(button)):not(:has(a)) { pointer-events: none !important; }
-      #root .animate-particle { pointer-events: none !important; }
-      #root canvas { pointer-events: none !important; touch-action: none; }
-      @media (max-height: 740px) { html { font-size: 14px; } }
-      @media (max-height: 640px) { html { font-size: 12.5px; } }
+      html, body {
+        margin: 0; padding: 0;
+        overflow: hidden; overscroll-behavior: none;
+        background: #0b1020;
+      }
+      #root { width: 100%; height: 100vh; }
+      /* Корень приложения: высота = высоте #root (которую задаёт JS в пикселях) */
+      #root > div { height: 100% !important; max-height: 100% !important; }
+      /* Экраны меню и Game Over: строго в пределах экрана, со внутренней прокруткой */
+      #root .min-h-screen {
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+      }
+      #root .min-h-screen::-webkit-scrollbar { display: none; }
+      /* Холст игры не перехватывает касания: свайпы слушаются на уровне окна */
+      #root canvas { pointer-events: none; touch-action: none; }
+      /* На низких экранах сжимаем масштаб интерфейса, чтобы PLAY влезал без прокрутки */
+      @media (max-height: 780px) { html { font-size: 14px; } }
+      @media (max-height: 680px) { html { font-size: 12.5px; } }
+      @media (max-height: 580px) { html { font-size: 11px; } }
+      .a4badge {
+        position: fixed; right: 10px; bottom: 10px; z-index: 99999;
+        background: #22c55e; color: #fff;
+        font: 700 12px/1.4 system-ui, sans-serif;
+        padding: 5px 12px; border-radius: 999px;
+        pointer-events: none; transition: opacity .8s;
+      }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <div class="a4badge" id="v4badge">v4 · фикс применён</div>
     <script>
+      // === Подгонка высоты под реальный видимый экран (в пикселях, без dvh) ===
       (function () {
         var vv = window.visualViewport;
-        if (vv) ['resize', 'scroll'].forEach(function (ev) {
-          vv.addEventListener(ev, function () { window.dispatchEvent(new Event('resize')); });
-        });
-        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 500);
-        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 1500);
+        function vh() { return vv ? Math.round(vv.height) : window.innerHeight; }
+        function apply() {
+          var h = vh() + 'px';
+          var root = document.getElementById('root');
+          if (root) root.style.height = h;
+          document.documentElement.style.height = h;
+          document.body.style.height = h;
+        }
+        apply();
+        window.addEventListener('resize', apply);
+        window.addEventListener('orientationchange', apply);
+        if (vv) ['resize', 'scroll'].forEach(function (ev) { vv.addEventListener(ev, apply); });
+        window.fixV4 = apply;
       })();
+
+      // === Ремонт вёрстки после монтирования React ===
+      (function () {
+        var done = false;
+        function fix() {
+          if (typeof window.fixV4 === 'function') window.fixV4();
+          var menu = document.querySelector('#root [class*="min-h-screen"]');
+          if (menu) {
+            menu.style.height = '100%';
+            menu.style.overflowY = 'auto';
+            menu.style.webkitOverflowScrolling = 'touch';
+            done = true;
+          }
+        }
+        var t1 = setInterval(function () { if (document.querySelector('#root > div')) { fix(); if (done) clearInterval(t1); } }, 300);
+        setTimeout(function () { clearInterval(t1); fix(); }, 4000);
+        if (window.MutationObserver) {
+          new MutationObserver(fix).observe(document.getElementById('root'), { childList: true, subtree: true });
+        }
+      })();
+
+      // === Переименование брендов Subway Surfers на лету ===
       (function () {
         var rep = [
           [/SUBTRAE/g, 'КУРЬЕР'],
@@ -39,7 +91,7 @@
           [/A boy with 80s styled high top fade!/, 'Парень в стиле 80-х!'],
           [/A tech genius and science[^"]*/, 'Гений технологий и науки!']
         ];
-        function fix(node) {
+        function fixNode(node) {
           if (node.nodeType === 3) {
             var t = node.nodeValue, o = t;
             rep.forEach(function (r) { t = t.replace(r[0], r[1]); });
@@ -47,19 +99,40 @@
             return;
           }
           if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
-            node.childNodes.forEach(fix);
+            node.childNodes.forEach(fixNode);
           }
         }
-        new MutationObserver(function (muts) {
-          muts.forEach(function (m) {
-            m.addedNodes.forEach(fix);
-            if (m.type === 'characterData') fix(m.target);
-          });
-        }).observe(document.body, { childList: true, subtree: true, characterData: true });
+        if (window.MutationObserver && document.body) {
+          new MutationObserver(function (muts) {
+            muts.forEach(function (m) {
+              m.addedNodes.forEach(fixNode);
+              if (m.type === 'characterData') fixNode(m.target);
+            });
+          }).observe(document.body, { childList: true, subtree: true, characterData: true });
+        }
       })();
+
+      // === Полноэкранный режим на Android при первом касании ===
+      (function () {
+        var used = false;
+        document.addEventListener('touchstart', function () {
+          if (used) return; used = true;
+          var el = document.documentElement;
+          if (el.requestFullscreen && !document.fullscreenElement) {
+            try { el.requestFullscreen().catch(function(){}); } catch (e) {}
+          }
+        }, { once: true, passive: true });
+      })();
+
+      // === Бейдж версии: виден 5 секунд, подтверждает, что новый index.html загружен ===
+      setTimeout(function () {
+        var b = document.getElementById('v4badge');
+        if (b) { b.style.opacity = '0'; setTimeout(function(){ if (b && b.parentNode) b.parentNode.removeChild(b); }, 1000); }
+      }, 5000);
     </script>
     <script type="module" crossorigin src="/assets/index-CvdEta2R.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BQCkql1O.css" />
   </body>
 </html>
+
 
