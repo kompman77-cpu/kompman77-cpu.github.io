@@ -11,21 +11,15 @@
       html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #0b1020; }
       #root { height: 100dvh; }
       #root > div { height: 100dvh !important; max-height: 100dvh !important; }
-      /* экраны (меню/пауза/гейм-овер) влезают в видимую область, при нехватке — прокрутка внутри */
       #root .min-h-screen {
-        min-height: 100dvh !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        touch-action: pan-y;
-        -webkit-overflow-scrolling: touch;
-        justify-content: flex-start !important;
+        min-height: 100dvh !important; height: 100dvh !important; max-height: 100dvh !important;
+        overflow-y: auto !important; overflow-x: hidden !important;
+        touch-action: pan-y; -webkit-overflow-scrolling: touch; justify-content: flex-start !important;
       }
-      /* декоративные слои не ловят касания */
       #root .pointer-events-none { pointer-events: none !important; }
       #root canvas { pointer-events: none !important; touch-action: none; }
-      /* интерфейс ужат на маленьких экранах (Tailwind считаем в rem) */
+      /* шестерёнка и корзина — пустые кнопки без функций, убираем их */
+      #root .p-6.animate-slide-down button { display: none !important; }
       html { font-size: 14px; }
       @media (max-height: 820px) { html { font-size: 13px; } }
       @media (max-height: 740px) { html { font-size: 12px; } }
@@ -35,7 +29,6 @@
   <body>
     <div id="root"></div>
     <script>
-      // полноэкранный режим: по первому касанию (Android), с тихим отказом (iOS)
       (function () {
         var done = false;
         document.addEventListener('pointerdown', function () {
@@ -45,18 +38,67 @@
           if (req) req.call(el).catch(function () {});
         }, { once: true, passive: true });
       })();
-      // бейдж версии
       (function () {
         var b = document.createElement('div');
-        b.textContent = 'v5 · русский · быстрый цикл';
+        b.textContent = 'v6 · игра восстановлена';
         b.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:99999;background:#16a34a;color:#fff;font:600 11px sans-serif;padding:4px 8px;border-radius:6px;opacity:.9;pointer-events:none';
         document.body.appendChild(b);
         setTimeout(function () { b.style.transition = 'opacity 1s'; b.style.opacity = '0'; }, 5000);
+      })();
+      (function () {
+        var rep = [
+          [/SUBTRAE/g, 'КУРЬЕР'], [/SURFERS/g, 'ЭКСПРЕСС'],
+          [/Run as far as you can!/g, 'Беги как можно дальше!'],
+          [/CHOOSE YOUR SURFER!/g, 'ВЫБЕРИ ГЕРОЯ!'],
+          [/PLAY!/g, 'ИГРАТЬ!'],
+          [/CONTROLS/g, 'УПРАВЛЕНИЕ'],
+          [/← → Move/g, '← → Влево-вправо'], [/↑ Jump/g, '↑ Прыжок'],
+          [/↓ Roll/g, '↓ Подкат'], [/📱 Swipe/g, '📱 Свайпы'],
+          [/COLLECT COINS • AVOID OBSTACLES • BEAT HIGH SCORE!/g, 'СОБИРАЙ МОНЕТЫ • ОБХОДИ ПРЕПЯТСТВИЯ • БЕЙ РЕКОРД!'],
+          [/\bJake\b/g, 'Курьер'], [/\bTricky\b/g, 'Шеф'],
+          [/\bFresh\b/g, 'Пекарь'], [/\bYutani\b/g, 'Повар'],
+          [/The original subway surfer and our main surfer!/g, 'Легенда районных улиц и наш главный герой!'],
+          [/A real perfectionist and the brains of the Surfers!/g, 'Перфекционист и мозг команды!'],
+          [/A boy with 80s styled high top fade!/g, 'Парень в стиле 80-х!'],
+          [/A tech genius and science obsessed!/g, 'Гений технологий и науки!'],
+          [/GAME OVER/gi, 'ИГРА ОКОНЧЕНА!'],
+          [/HIGH SCORE/gi, 'РЕКОРД'],
+          [/NEW HIGH SCORE!/gi, 'НОВЫЙ РЕКОРД!'],
+          [/COINS EARNED/gi, 'МОНЕТ СОБРАНО'],
+          [/DISTANCE/gi, 'ДИСТАНЦИЯ'],
+          [/SCORE/g, 'ОЧКИ'],
+          [/PLAY AGAIN/gi, 'ЕЩЁ РАЗ!'],
+          [/BACK TO MENU/gi, 'В МЕНЮ'],
+          [/RESUME/gi, 'ПРОДОЛЖИТЬ'],
+          [/RESTART/gi, 'ЗАНОВО'],
+          [/PAUSED/gi, 'ПАУЗА'],
+          [/MENU/gi, 'МЕНЮ'],
+          [/SPEED/gi, 'СКОРОСТЬ'],
+          [/LANE/gi, 'ПОЛОСА'],
+          [/GET READY/gi, 'ПРИГОТОВЬСЯ!'],
+          [/TAP TO/gi, 'КОСНИСЬ, ЧТОБЫ']
+        ];
+        function fix(node) {
+          if (node.nodeType === 3) {
+            var t = node.nodeValue, o = t;
+            rep.forEach(function (r) { t = t.replace(r[0], r[1]); });
+            if (t !== o) node.nodeValue = t;
+            return;
+          }
+          if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') node.childNodes.forEach(fix);
+        }
+        new MutationObserver(function (muts) {
+          muts.forEach(function (m) {
+            m.addedNodes.forEach(fix);
+            if (m.type === 'characterData') fix(m.target);
+          });
+        }).observe(document.body, { childList: true, subtree: true, characterData: true });
       })();
     </script>
     <script type="module" crossorigin src="/assets/index-CvdEta2R.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BQCkql1O.css" />
   </body>
 </html>
+
 
 
