@@ -1,14 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Subtrae Surfers</title>
-    <script type="module" crossorigin src="/assets/index-CvdEta2R.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>Курьер Экспресс</title>
+    <style>
+      html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0b1020;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+      #root{width:100%;height:100%;position:relative}
+      canvas{touch-action:none;display:block}
+      .h-screen{height:100vh;height:100dvh!important}
+      .min-h-screen{min-height:100vh;min-height:100dvh!important}
+      button,[role=button]{touch-action:manipulation}
+    </style>
     <link rel="stylesheet" crossorigin href="/assets/index-BQCkql1O.css">
   </head>
   <body>
     <div id="root"></div>
+    <script type="module" crossorigin src="/assets/index-CvdEta2R.js"></script>
+    <script>
+      // Android: полноэкранный режим при первом касании (iOS Safari это ограничивает)
+      (function () {
+        var done = false;
+        function goFull() {
+          if (done) return;
+          done = true;
+          try {
+            var el = document.documentElement;
+            if (el.requestFullscreen) { el.requestFullscreen().catch(function(){}); }
+          } catch (e) {}
+          document.removeEventListener('pointerdown', goFull);
+          document.removeEventListener('touchstart', goFull);
+        }
+        document.addEventListener('pointerdown', goFull);
+        document.addEventListener('touchstart', goFull, { passive: true });
+      })();
+    </script>
   </body>
 </html>
